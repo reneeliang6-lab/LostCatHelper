@@ -8,7 +8,33 @@
 
 <h1> Lost Cat Helper</h1>
 
-<p>Helping owners find their missing cats.</p>
+<h2>Report a Lost Cat</h2>
 
+<form action="/submit" method="POST" enctype="multipart/form-data">
+
+    <label>Cat Name:</label><br>
+    <input type="text" name="cat_name"><br><br>
+
+    <label>Description:</label><br>
+    <input type="text" name="description"><br><br>
+
+    <label>Last Seen Location:</label><br>
+    <input type="text" name="location"><br><br>
+
+    <label>Contact Number:</label><br>
+    <input type="text" name="contact"><br><br>
+
+    <label>Cat Photo:</label><br>
+    <input type="file" name="photo"><br><br>
+    
+    <button type="submit">Submit</button>
+
+</form>
+</div>
 </body>
+<div class="container"></div>
 </html>
+
+<br><br>
+
+<a href="/cats" class="button-link">View Lost Cats</a>
