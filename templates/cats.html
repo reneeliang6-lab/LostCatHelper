@@ -9,21 +9,46 @@
 
 <h1>🐱 Lost Cats</h1>
 
-{% for cat in cats %}
+<form action="/cats" method="GET">
 
-<div class="card">
+    <input
+        type="text"
+        name="search"
+        placeholder="Search by location">
 
-<p><strong>Name:</strong> {{ cat[1] }}</p>
+    <button type="submit">
+        Search
+    </button>
 
-<p><strong>Description:</strong> {{ cat[2] }}</p>
+</form>
 
-<p><strong>Location:</strong> {{ cat[3] }}</p>
+<br>
 
-<p><strong>Contact:</strong> {{ cat[4] }}</p>
+{% if cats %}
 
-</div>
+    {% for cat in cats %}
 
-{% endfor %}
+        <div class="card">
+
+            <img src="/uploads/{{ cat[5] }}" width="200">
+
+            <h2>{{ cat[1] }}</h2>
+
+            <p>{{ cat[2] }}</p>
+
+            <p>📍 {{ cat[3] }}</p>
+
+            <p>📞 {{ cat[4] }}</p>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <h3>No lost cats found.</h3>
+
+{% endif %}
 
 </body>
 
