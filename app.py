@@ -12,7 +12,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 print(app.config["UPLOAD_FOLDER"])
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = r"C:\Users\USER\Desktop\lostcats.db"
+DB_PATH = os.path.join(BASE_DIR, "lostcats.db")
 
 print("BASE_DIR:", BASE_DIR)
 print("DB_PATH:", DB_PATH)
@@ -49,9 +49,6 @@ def submit():
     photo = request.files["photo"]
     filename = photo.filename
 
-    if photo.filename != "":
-        photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo.filename))
-
     if filename != "":
         photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
@@ -61,7 +58,7 @@ def submit():
         """
         INSERT INTO cats
         (cat_name, description, location, contact, photo)
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         """,
         (cat_name, description, location, contact, filename)
     )
@@ -76,11 +73,22 @@ create_table()
 @app.route("/cats")
 def cats():
 
+    search = request.args.get("search")
+
     conn = sqlite3.connect(DB_PATH)
 
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM cats")
+    if search:
+
+        cursor.execute(
+            "SELECT * FROM cats WHERE location LIKE ?",
+            ("%" + search + "%",)
+        )
+
+    else:
+
+        cursor.execute("SELECT * FROM cats")
 
     cats = cursor.fetchall()
 
@@ -91,6 +99,6 @@ def cats():
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-        
+
 if __name__ == "__main__":
     app.run(debug=True)
