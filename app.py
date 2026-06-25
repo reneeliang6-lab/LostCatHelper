@@ -57,5 +57,18 @@ def submit():
   
 create_table()
 
+@app.route("/cats")
+def cats():
+
+    conn = sqlite3.connect("lostcats.db")
+
+    data = conn.execute(
+        "SELECT * FROM cats"
+    ).fetchall()
+
+    conn.close()
+
+    return str(data)
+    
 if __name__ == "__main__":
     app.run(debug=True)
