@@ -60,15 +60,17 @@ create_table()
 @app.route("/cats")
 def cats():
 
-    conn = sqlite3.connect("lostcats.db")
+    conn = sqlite3.connect(DB_PATH)
 
-    data = conn.execute(
-        "SELECT * FROM cats"
-    ).fetchall()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM cats")
+
+    cats = cursor.fetchall()
 
     conn.close()
 
-    return str(data)
+    return render_template("cats.html", cats=cats)
     
 if __name__ == "__main__":
     app.run(debug=True)
