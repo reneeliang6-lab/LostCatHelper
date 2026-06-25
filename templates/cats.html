@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Lost Cats</title>
+</head>
+
+<body>
+
+<h1>🐱 Lost Cats</h1>
+
+{% for cat in cats %}
+
+<div class="card">
+
+<p><strong>Name:</strong> {{ cat[1] }}</p>
+
+<p><strong>Description:</strong> {{ cat[2] }}</p>
+
+<p><strong>Location:</strong> {{ cat[3] }}</p>
+
+<p><strong>Contact:</strong> {{ cat[4] }}</p>
+
+</div>
+
+{% endfor %}
+
+</body>
+
+</html>
