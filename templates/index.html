@@ -4,37 +4,54 @@
     <title>Lost Cat Helper</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
-<h1> Lost Cat Helper</h1>
+<nav>
+    <a href="/">🏠 Home</a>
+    <a href="/cats">🐱 View Lost Cats</a>
+</nav>
 
-<h2>Report a Lost Cat</h2>
+<hr>
 
-<form action="/submit" method="POST" enctype="multipart/form-data">
+<div class="container">
 
-    <label>Cat Name:</label><br>
-    <input type="text" name="cat_name"><br><br>
+    <h1>🐱 Lost Cat Helper</h1>
 
-    <label>Description:</label><br>
-    <input type="text" name="description"><br><br>
+    <h2>Report a Lost Cat</h2>
 
-    <label>Last Seen Location:</label><br>
-    <input type="text" name="location"><br><br>
+    <form action="/submit" method="POST" enctype="multipart/form-data">
 
-    <label>Contact Number:</label><br>
-    <input type="text" name="contact"><br><br>
+        <label>Cat Name:</label><br>
+        <input type="text" name="cat_name"><br><br>
 
-    <label>Cat Photo:</label><br>
-    <input type="file" name="photo"><br><br>
-    
-    <button type="submit">Submit</button>
+        <label>Description:</label><br>
+        <input type="text" name="description"><br><br>
 
-</form>
+        <label>Last Seen Location:</label><br>
+        <input type="text" name="location"><br><br>
+
+        <label>Contact Number:</label><br>
+        <input type="text" name="contact"><br><br>
+
+        <label>Cat Photo:</label><br>
+        <input type="file" name="photo"><br><br>
+
+        <button type="submit">Submit</button>
+
+    </form>
+
+    <br><br>
+
+    <a href="/cats" class="button-link">View Lost Cats</a>
+
 </div>
+
+<hr>
+
+<p style="text-align:center;">
+    Lost Cat Helper © 2026
+</p>
+
 </body>
-<div class="container"></div>
 </html>
-
-<br><br>
-
-<a href="/cats" class="button-link">View Lost Cats</a>
