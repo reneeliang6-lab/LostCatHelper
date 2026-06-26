@@ -3,52 +3,76 @@
 
 <head>
     <title>Lost Cats</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
-<h1>🐱 Lost Cats</h1>
+<nav>
+    <a href="/">🏠 Home</a>
+    <a href="/cats">🐱 View Lost Cats</a>
+</nav>
 
-<form action="/cats" method="GET">
+<hr>
 
-    <input
-        type="text"
-        name="search"
-        placeholder="Search by location">
+<div class="container">
 
-    <button type="submit">
-        Search
-    </button>
+    <h1>🐱 Lost Cats</h1>
 
-</form>
+    <form action="/cats" method="GET">
 
-<br>
+        <input
+            type="text"
+            name="search"
+            placeholder="Search by location">
 
-{% if cats %}
+        <button type="submit">Search</button>
 
-    {% for cat in cats %}
+    </form>
 
-        <div class="card">
+    <br>
 
-            <img src="/uploads/{{ cat[5] }}" width="200">
+    {% if cats %}
 
-            <h2>{{ cat[1] }}</h2>
+        {% for cat in cats %}
 
-            <p>{{ cat[2] }}</p>
+            <div class="card">
 
-            <p>📍 {{ cat[3] }}</p>
+                <img src="/uploads/{{ cat[5] }}" width="250">
 
-            <p>📞 {{ cat[4] }}</p>
+                <h2>{{ cat[1] }}</h2>
 
-        </div>
+                <p><strong>Description:</strong> {{ cat[2] }}</p>
 
-    {% endfor %}
+                <p>📍 {{ cat[3] }}</p>
 
-{% else %}
+                <p>📞 {{ cat[4] }}</p>
 
-    <h3>No lost cats found.</h3>
+                <a href="/delete/{{ cat[0] }}">
+                    <button>Delete</button>
+                </a>
 
-{% endif %}
+                <a href="/edit/{{ cat[0] }}">
+                    <button>Edit</button>
+                </a>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <h2>No lost cats found.</h2>
+
+    {% endif %}
+
+</div>
+
+<hr>
+
+<p style="text-align:center;">
+    Lost Cat Helper © 2026
+</p>
 
 </body>
 
