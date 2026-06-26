@@ -28,8 +28,20 @@ def create_table():
             cat_name TEXT,
             description TEXT,
             location TEXT,
+            latitude REAL,
+            longitude REAL,
             contact TEXT,
             photo TEXT
+        )
+        """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS sightings(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cat_id INTEGER,
+            sighting_location TEXT,
+            sighting_time TEXT,
+            notes TEXT
         )
         """)
 
@@ -45,6 +57,8 @@ def submit():
     cat_name = request.form["cat_name"]
     description = request.form["description"]
     location = request.form["location"]
+    latitude = request.form["latitude"]
+    longitude = request.form["longitude"]
     contact = request.form["contact"]
     photo = request.files["photo"]
     filename = photo.filename
@@ -57,10 +71,18 @@ def submit():
     conn.execute(
         """
         INSERT INTO cats
-        (cat_name, description, location, contact, photo)
-        VALUES (?, ?, ?, ?, ?)
+        (cat_name, description, location, latitude, longitude, contact, photo)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-        (cat_name, description, location, contact, filename)
+        (
+            cat_name,
+            description,
+            location,
+            latitude,
+            longitude,
+            contact,
+            filename
+        )
     )
 
     conn.commit()
@@ -193,6 +215,14 @@ def poster(id):
         "poster.html",
         cat=cat
     )
-          
+
+@app.route("/sighting/<int:id>")
+def sighting(id):
+
+    return render_template(
+        "sighting.html",
+        cat_id=id
+    )
+
 if __name__ == "__main__":
     app.run(debug=True)
