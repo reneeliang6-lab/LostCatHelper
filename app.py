@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request 
+from flask import Flask, render_template, request, redirect
 from flask import send_from_directory
 import sqlite3
 import os
@@ -80,14 +80,11 @@ def cats():
     cursor = conn.cursor()
 
     if search:
-
         cursor.execute(
             "SELECT * FROM cats WHERE location LIKE ?",
             ("%" + search + "%",)
         )
-
     else:
-
         cursor.execute("SELECT * FROM cats")
 
     cats = cursor.fetchall()
@@ -100,5 +97,81 @@ def cats():
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
+@app.route("/delete/<int:id>")
+def delete(id):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM cats WHERE id=?",
+        (id,)
+    )
+
+    conn.commit()
+
+    conn.close()
+
+    return redirect("/cats")
+
+@app.route("/edit/<int:id>")
+def edit(id):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM cats WHERE id=?",
+        (id,)
+    )
+
+    cat = cursor.fetchone()
+
+    conn.close()
+
+    return render_template(
+        "edit.html",
+        cat=cat
+    )
+
+@app.route("/update/<int:id>", methods=["POST"])
+def update(id):
+
+    cat_name = request.form["cat_name"]
+    description = request.form["description"]
+    location = request.form["location"]
+    contact = request.form["contact"]
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE cats
+        SET
+        cat_name=?,
+        description=?,
+        location=?,
+        contact=?
+        WHERE id=?
+        """,
+        (
+            cat_name,
+            description,
+            location,
+            contact,
+            id
+        )
+    )
+
+    conn.commit()
+
+    conn.close()
+
+    return redirect("/cats")
+       
 if __name__ == "__main__":
     app.run(debug=True)
