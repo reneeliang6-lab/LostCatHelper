@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Report Sighting</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>👀 Report Cat Sighting</h1>
+
+<form
+action="/save_sighting"
+method="POST">
+
+<input
+type="hidden"
+name="cat_id"
+value="{{ cat_id }}">
+
+<label>Location</label>
+
+<input
+type="text"
+name="location">
+
+<label>Time</label>
+
+<input
+type="text"
+name="time">
+
+<label>Notes</label>
+
+<input
+type="text"
+name="notes">
+
+<br><br>
+
+<button>
+
+Submit
+
+</button>
+
+</form>
+
+</div>
+
+</body>
+
+</html>
