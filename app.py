@@ -172,6 +172,27 @@ def update(id):
     conn.close()
 
     return redirect("/cats")
-       
+
+@app.route("/poster/<int:id>")
+def poster(id):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM cats WHERE id=?",
+        (id,)
+    )
+
+    cat = cursor.fetchone()
+
+    conn.close()
+
+    return render_template(
+        "poster.html",
+        cat=cat
+    )
+          
 if __name__ == "__main__":
     app.run(debug=True)
