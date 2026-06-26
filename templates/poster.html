@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Cat Poster</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="poster">
+
+    <h1>🚨 MISSING {{ cat[1]|upper }} 🚨</h1>
+
+    <img src="/uploads/{{ cat[5] }}" alt="Missing Cat">
+
+    <h2>{{ cat[1] }}</h2>
+
+    <hr>
+
+    <p><strong>🐱 Description</strong></p>
+    <p>{{ cat[2] }}</p>
+
+    <p><strong>📍 Last Seen</strong></p>
+    <p>{{ cat[3] }}</p>
+
+    <p><strong>☎ Contact Number</strong></p>
+    <p>{{ cat[4] }}</p>
+
+    <hr>
+
+    <h2 class="reward">PLEASE HELP BRING ME HOME!</h2>
+
+    <p class="message">
+        If you have seen this cat, please contact the owner immediately.
+        Any information is greatly appreciated.
+    </p>
+
+    <button onclick="window.print()">
+        🖨 Print / Save as PDF
+    </button>
+
+    <br><br>
+
+    <a href="/cats" class="button-link">
+        ← Back to Lost Cats
+    </a>
+
+</div>
+
+</body>
+
+</html>
