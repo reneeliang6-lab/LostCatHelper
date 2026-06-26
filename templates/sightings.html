@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Sightings</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>👀 Cat Sighting History</h1>
+
+{% if sightings %}
+
+{% for s in sightings %}
+
+<div class="card">
+
+<h3>{{ s[2] }}</h3>
+
+<p>🕒 {{ s[3] }}</p>
+
+<p>{{ s[4] }}</p>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<h2>No sightings yet.</h2>
+
+{% endif %}
+
+</div>
+
+</body>
+
+</html>
