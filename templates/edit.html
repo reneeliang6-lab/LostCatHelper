@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Edit Cat</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Edit Report</h1>
+
+<form action="/update/{{ cat[0] }}" method="POST">
+
+<label>Name</label>
+
+<input
+type="text"
+name="cat_name"
+value="{{ cat[1] }}">
+
+<label>Description</label>
+
+<input
+type="text"
+name="description"
+value="{{ cat[2] }}">
+
+<label>Location</label>
+
+<input
+type="text"
+name="location"
+value="{{ cat[3] }}">
+
+<label>Contact</label>
+
+<input
+type="text"
+name="contact"
+value="{{ cat[4] }}">
+
+<button>
+Update
+</button>
+
+</form>
+
+</div>
+
+</body>
+
+</html>
