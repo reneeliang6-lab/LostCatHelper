@@ -224,5 +224,67 @@ def sighting(id):
         cat_id=id
     )
 
+@app.route("/save_sighting", methods=["POST"])
+def save_sighting():
+
+    cat_id = request.form["cat_id"]
+
+    location = request.form["location"]
+
+    time = request.form["time"]
+
+    notes = request.form["notes"]
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO sightings
+        (cat_id,sighting_location,sighting_time,notes)
+
+        VALUES(?,?,?,?)
+        """,
+        (
+            cat_id,
+            location,
+            time,
+            notes
+        )
+    )
+
+    conn.commit()
+
+    conn.close()
+
+    return redirect("/cats")
+
+@app.route("/view_sightings/<int:id>")
+def view_sightings(id):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM sightings
+
+        WHERE cat_id=?
+        """,
+        (id,)
+    )
+
+    sightings = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "sightings.html",
+        sightings=sightings
+    )
+      
 if __name__ == "__main__":
     app.run(debug=True)
