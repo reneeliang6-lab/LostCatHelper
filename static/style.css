@@ -131,3 +131,11 @@ button:hover{
     border-radius:10px;
 
 }
+
+.dashboard{
+    background:#fff3cd;
+    border-left:6px solid orange;
+    padding:20px;
+    margin-bottom:30px;
+    border-radius:10px;
+}
