@@ -68,6 +68,10 @@
                     <button>📍 View Sightings</button>
                 </a>
 
+                <a href="/found/{{ cat[0] }}">
+                    <button>✅ Mark as Found</button>
+                </a>
+
             </div>
 
         {% endfor %}
@@ -77,7 +81,12 @@
         <h2>No lost cats found.</h2>
 
     {% endif %}
-
+    
+    {% if cat[8] == "Lost" %}
+        <p style="color:red;"><strong>🔴 LOST</strong></p>
+    {% else %}
+        <p style="color:green;"><strong>🟢 FOUND</strong></p>
+    {% endif %}
 </div>
 
 <hr>
