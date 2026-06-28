@@ -19,11 +19,15 @@ print("DB_PATH:", DB_PATH)
 
 def create_table():
     conn = sqlite3.connect(DB_PATH)
-    print(DB_PATH)
-    print(os.path.exists(BASE_DIR))
+    cursor = conn.cursor()
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS cats (
+    # Delete old tables (for development only)
+    cursor.execute("DROP TABLE IF EXISTS cats")
+    cursor.execute("DROP TABLE IF EXISTS sightings")
+
+    # Create cats table
+    cursor.execute("""
+        CREATE TABLE cats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_name TEXT,
             description TEXT,
@@ -33,15 +37,31 @@ def create_table():
             contact TEXT,
             photo TEXT
         )
-        """)
+    """)
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS sightings(
+    # Create sightings table
+    cursor.execute("""
+        CREATE TABLE sightings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_id INTEGER,
             sighting_location TEXT,
             sighting_time TEXT,
-            notes TEXT
+            notes TEXT,
+            FOREIGN KEY (cat_id) REFERENCES cats(id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS cats(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cat_name TEXT,
+            description TEXT,
+            location TEXT,
+            latitude REAL,
+            longitude REAL,
+            contact TEXT,
+            photo TEXT,
+            status TEXT DEFAULT 'Lost'
         )
         """)
 
@@ -71,8 +91,8 @@ def submit():
     conn.execute(
         """
         INSERT INTO cats
-        (cat_name, description, location, latitude, longitude, contact, photo)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (cat_name, description, location, latitude, longitude, contact, photo, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             cat_name,
@@ -81,7 +101,8 @@ def submit():
             latitude,
             longitude,
             contact,
-            filename
+            filename,
+            "Lost"
         )
     )
 
@@ -285,6 +306,48 @@ def view_sightings(id):
         "sightings.html",
         sightings=sightings
     )
-      
+
+@app.route("/found/<int:id>")
+def found(id):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE cats SET status='Found' WHERE id=?",
+        (id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/cats")
+
+@app.route("/")
+def home():
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM cats")
+    total_cats = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM cats WHERE status='Found'")
+    found_cats = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM sightings")
+    total_sightings = cursor.fetchone()[0]
+
+    conn.close()
+
+    return render_template(
+        "index.html",
+        total_cats=total_cats,
+        found_cats=found_cats,
+        total_sightings=total_sightings
+    )
+
 if __name__ == "__main__":
     app.run(debug=True)
