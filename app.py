@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect
 from flask import send_from_directory
+from werkzeug.utils import secure_filename
+import uuid
 import sqlite3
 import os
 
@@ -7,7 +9,7 @@ app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
-
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 print(app.config["UPLOAD_FOLDER"])
 
@@ -17,31 +19,25 @@ DB_PATH = os.path.join(BASE_DIR, "lostcats.db")
 print("BASE_DIR:", BASE_DIR)
 print("DB_PATH:", DB_PATH)
 
-def create_table():
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+def allowed_file(filename):
+    return (
+        "." in filename and
+        filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    )
+
+def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
+    return conn
+
+def create_table():
+    conn = get_db_connection()
     cursor = conn.cursor()
-
-    # Delete old tables (for development only)
-    cursor.execute("DROP TABLE IF EXISTS cats")
-    cursor.execute("DROP TABLE IF EXISTS sightings")
-
-    # Create cats table
-    cursor.execute("""
-        CREATE TABLE cats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cat_name TEXT,
-            description TEXT,
-            location TEXT,
-            latitude REAL,
-            longitude REAL,
-            contact TEXT,
-            photo TEXT
-        )
-    """)
 
     # Create sightings table
     cursor.execute("""
-        CREATE TABLE sightings (
+        CREATE TABLE IF NOT EXISTS sightings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_id INTEGER,
             sighting_location TEXT,
@@ -68,64 +64,104 @@ def create_table():
     conn.commit()
     conn.close()
 
-@app.route("/")
-def home():
-    return render_template("index.html")
-
 @app.route("/submit", methods=["POST"])
 def submit():
-    cat_name = request.form["cat_name"]
-    description = request.form["description"]
-    location = request.form["location"]
-    latitude = request.form["latitude"]
-    longitude = request.form["longitude"]
-    contact = request.form["contact"]
-    photo = request.files["photo"]
-    filename = photo.filename
+    cat_name = request.form["cat_name"].strip()
+    description = request.form["description"].strip()
+    location = request.form["location"].strip()
+    latitude = request.form["latitude"].strip()
+    longitude = request.form["longitude"].strip()
+    contact = request.form["contact"].strip()
+    photo = request.files["photo"].strip()
+    filename = str(uuid.uuid4()) + "_" + secure_filename(photo.filename)
 
-    if filename != "":
-        photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+    # Check if an image file was uploaded
+    if photo.filename == "":
+        return "Please upload a photo of the cat."
 
-    conn = sqlite3.connect(DB_PATH)
+    if not allowed_file(photo.filename):
+        return "Only PNG, JPG, JPEG, and GIF image files are allowed."
+    # Validate required fields
+    if not cat_name:
+        return "Cat name is required."
 
-    conn.execute(
-        """
-        INSERT INTO cats
-        (cat_name, description, location, latitude, longitude, contact, photo, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            cat_name,
-            description,
-            location,
-            latitude,
-            longitude,
-            contact,
-            filename,
-            "Lost"
+    if not description:
+        return "Description is required."
+
+    if not location:
+        return "Location is required."
+
+    if not contact:
+        return "Contact information is required."
+
+    # Validate coordinates
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except ValueError:
+        return "Invalid latitude or longitude."
+
+    try:
+        if filename != "":
+            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+    except Exception as e:
+        return f"Upload failed: {e}"
+
+    try:
+        conn = get_db_connection()
+
+        conn.execute(
+            """
+            INSERT INTO cats
+            (cat_name, description, location, latitude, longitude, contact, photo, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                cat_name,
+                description,
+                location,
+                latitude,
+                longitude,
+                contact,
+                filename,
+                "Lost"
+            )
         )
-    )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+
+    except sqlite3.Error as e:
+        return f"Database Error: {e}"
+
+    finally:
+        conn.close()
 
     return render_template("success.html")
   
-create_table()
-
 @app.route("/cats")
 def cats():
 
     search = request.args.get("search")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
     if search:
         cursor.execute(
-            "SELECT * FROM cats WHERE location LIKE ?",
-            ("%" + search + "%",)
+            """
+            SELECT *
+            FROM cats
+            WHERE
+                cat_name LIKE ?
+                OR description LIKE ?
+                OR location LIKE ?
+            """,
+            (
+                "%" + search + "%",
+                "%" + search + "%",
+                "%" + search + "%"
+            )
         )
     else:
         cursor.execute("SELECT * FROM cats")
@@ -140,20 +176,39 @@ def cats():
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
+
 @app.route("/delete/<int:id>")
 def delete(id):
 
-    conn = sqlite3.connect(DB_PATH)
-
+    conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Get the photo filename
+    cursor.execute(
+        "SELECT photo FROM cats WHERE id=?",
+        (id,)
+    )
+
+    photo = cursor.fetchone()
+
+    if photo is None:
+        conn.close()
+        return "Cat not found."
+
+    # Delete the image file
+    if photo[0]:
+        image_path = os.path.join(app.config["UPLOAD_FOLDER"], photo[0])
+
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+    # Delete the database record
     cursor.execute(
         "DELETE FROM cats WHERE id=?",
         (id,)
     )
 
     conn.commit()
-
     conn.close()
 
     return redirect("/cats")
@@ -161,7 +216,7 @@ def delete(id):
 @app.route("/edit/<int:id>")
 def edit(id):
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
@@ -174,6 +229,9 @@ def edit(id):
 
     conn.close()
 
+    if cat is None:
+        return "Cat not found."
+
     return render_template(
         "edit.html",
         cat=cat
@@ -182,12 +240,12 @@ def edit(id):
 @app.route("/update/<int:id>", methods=["POST"])
 def update(id):
 
-    cat_name = request.form["cat_name"]
-    description = request.form["description"]
-    location = request.form["location"]
-    contact = request.form["contact"]
+    cat_name = request.form["cat_name"].strip()
+    description = request.form["description"].strip()
+    location = request.form["location"].strip()
+    contact = request.form["contact"].strip()
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
@@ -219,7 +277,7 @@ def update(id):
 @app.route("/poster/<int:id>")
 def poster(id):
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
@@ -231,6 +289,9 @@ def poster(id):
     cat = cursor.fetchone()
 
     conn.close()
+
+    if cat is None:
+        return "Cat not found."
 
     return render_template(
         "poster.html",
@@ -256,7 +317,7 @@ def save_sighting():
 
     notes = request.form["notes"]
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
@@ -284,7 +345,7 @@ def save_sighting():
 @app.route("/view_sightings/<int:id>")
 def view_sightings(id):
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
@@ -310,15 +371,26 @@ def view_sightings(id):
 @app.route("/found/<int:id>")
 def found(id):
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM cats WHERE id=?",
+        (id,)
+    )
+
+    cat = cursor.fetchone()
+
+    if cat is None:
+        conn.close()
+        return "Cat not found."
 
     cursor.execute(
         "UPDATE cats SET status='Found' WHERE id=?",
         (id,)
     )
-
+    
     conn.commit()
     conn.close()
 
@@ -327,7 +399,7 @@ def found(id):
 @app.route("/")
 def home():
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
     cursor = conn.cursor()
 
@@ -348,6 +420,8 @@ def home():
         found_cats=found_cats,
         total_sightings=total_sightings
     )
+
+create_table()
 
 if __name__ == "__main__":
     app.run(debug=True)
