@@ -47,7 +47,8 @@ def create_table():
         )
     """)
 
-    conn.execute("""
+    # Create cats table
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS cats(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_name TEXT,
@@ -59,7 +60,16 @@ def create_table():
             photo TEXT,
             status TEXT DEFAULT 'Lost'
         )
-        """)
+    """)
+
+    # Check whether the status column exists
+    cursor.execute("PRAGMA table_info(cats)")
+    columns = [column[1] for column in cursor.fetchall()]
+
+    if "status" not in columns:
+        cursor.execute(
+            "ALTER TABLE cats ADD COLUMN status TEXT DEFAULT 'Lost'"
+        )
 
     conn.commit()
     conn.close()
@@ -72,9 +82,10 @@ def submit():
     latitude = request.form["latitude"].strip()
     longitude = request.form["longitude"].strip()
     contact = request.form["contact"].strip()
-    photo = request.files["photo"].strip()
-    filename = str(uuid.uuid4()) + "_" + secure_filename(photo.filename)
-
+    photo = request.files["photo"]
+    filename = ""
+    if photo.filename != "":
+        filename = str(uuid.uuid4()) + "_" + secure_filename(photo.filename)
     # Check if an image file was uploaded
     if photo.filename == "":
         return "Please upload a photo of the cat."
@@ -142,35 +153,44 @@ def submit():
 def cats():
 
     search = request.args.get("search")
+    status = request.args.get("status")
 
     conn = get_db_connection()
-
     cursor = conn.cursor()
 
+    query = "SELECT * FROM cats WHERE 1=1"
+    parameters = []
+
     if search:
-        cursor.execute(
-            """
-            SELECT *
-            FROM cats
-            WHERE
+        query += """
+            AND (
                 cat_name LIKE ?
                 OR description LIKE ?
                 OR location LIKE ?
-            """,
-            (
-                "%" + search + "%",
-                "%" + search + "%",
-                "%" + search + "%"
             )
-        )
-    else:
-        cursor.execute("SELECT * FROM cats")
+        """
+        parameters.extend([
+            "%" + search + "%",
+            "%" + search + "%",
+            "%" + search + "%"
+        ])
+
+    if status:
+        query += " AND status=?"
+        parameters.append(status)
+
+    query += " ORDER BY status ASC, id DESC"
+
+    cursor.execute(query, parameters)
 
     cats = cursor.fetchall()
 
     conn.close()
 
-    return render_template("cats.html", cats=cats)
+    return render_template(
+        "cats.html",
+        cats=cats
+    )
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
@@ -412,15 +432,20 @@ def home():
     cursor.execute("SELECT COUNT(*) FROM sightings")
     total_sightings = cursor.fetchone()[0]
 
+    if total_cats == 0:
+        recovery_rate = 0
+    else:
+        recovery_rate = round((found_cats / total_cats) * 100, 1)
+
     conn.close()
 
     return render_template(
         "index.html",
         total_cats=total_cats,
         found_cats=found_cats,
-        total_sightings=total_sightings
+        total_sightings=total_sightings,
+        recovery_rate=recovery_rate
     )
-
 create_table()
 
 if __name__ == "__main__":
