@@ -16,7 +16,8 @@
 
     <h1>🚨 MISSING {{ cat[1]|upper }} 🚨</h1>
 
-    <img src="/uploads/{{ cat[5] }}" alt="Missing Cat">
+    <img src="{{ url_for('uploaded_file', filename=cat[7]) }}"
+         alt="Missing Cat">
 
     <h2>{{ cat[1] }}</h2>
 
@@ -29,7 +30,7 @@
     <p>{{ cat[3] }}</p>
 
     <p><strong>☎ Contact Number</strong></p>
-    <p>{{ cat[4] }}</p>
+    <p>{{ cat[6] }}</p>
 
     <hr>
 
@@ -53,5 +54,4 @@
 </div>
 
 </body>
-
 </html>
